@@ -77,14 +77,6 @@ public class OwnerManagementService {
         Owner owner = ownerRepository.findByIdAndIsDeletedFalse(ownerId)
                 .orElseThrow(() -> new NotFoundOwnerException("점주 정보를 찾을 수 없습니다."));
 
-
-//        if (passwordValidator.isPasswordChangeRequested(password)) {
-//            //비밀번호와 비밀번호 확인값이 같은지 검사.
-//            passwordValidator.validatePasswordMatch(password, passwordConfirm);
-//            // 암호화 후 엔티티에 반영
-//            owner.changePassword(passwordEncoder.encode(password));
-//        }
-
         // 전화번호 검증 → null 이거나 정규식 불일치면 예외
         if (phoneNumber == null || !phoneNumber.matches("^010-[0-9]{4}-[0-9]{4}$")) {
             throw new BadRequestException("핸드폰 번호 형식을 지켜주세요(010-xxxx-xxxx)");

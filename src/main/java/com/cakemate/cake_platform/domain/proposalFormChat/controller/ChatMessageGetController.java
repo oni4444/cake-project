@@ -23,6 +23,7 @@ public class ChatMessageGetController {
         this.jwtUtil = jwtUtil;
     }
 
+
     /**
      * [과거 채팅 기록 조회 API]
      * 클라이언트가 특정 채팅방의 메시지를 페이지 단위로 요청할 때 사용

@@ -11,14 +11,12 @@ public class CustomerProposalFormDetailDto {
     private RequestFormDataDto requestForm;
     private CustomerProposalFormDataDto proposalForm;
     private List<CommentDataDto> comments;
-    private final ChatHistorySectionDto chat;
 
     //생성자
-    public CustomerProposalFormDetailDto(RequestFormDataDto requestForm, CustomerProposalFormDataDto proposalForm, ChatHistorySectionDto chat, List<CommentDataDto> comments) {
+    public CustomerProposalFormDetailDto(RequestFormDataDto requestForm, CustomerProposalFormDataDto proposalForm, List<CommentDataDto> comments) {
         this.requestForm = requestForm;
         this.proposalForm = proposalForm;
         this.comments = comments;
-        this.chat = chat;
     }
 
     //기능

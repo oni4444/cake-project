@@ -68,20 +68,6 @@ public class OwnerSignUpService {
         this.restClient = restClientBuilder.baseUrl(kapiHost).build();
     }
 
-    private Owner findOwner(String name, String phoneNumber) {
-        Owner owner = ownerRepository
-                .findByNameAndPhoneNumber(name, phoneNumber)
-                .orElseThrow(() -> new OwnerNotFoundException("해당 점주가 존재하지 않습니다"));
-        return owner;
-    }
-
-    private boolean existsOwnerEmail(String email) {
-        return ownerRepository.existsByEmail(email);
-    }
-
-    private boolean existsOwner(String name, String phoneNumber) {
-        return ownerRepository.existsByNameAndPhoneNumber(name, phoneNumber);
-    }
 
     public ApiResponse<?> ownerLocalSignUpProcess(SearchCommand ownerSignUpRequest) {
         String email = ownerSignUpRequest.getEmail();
@@ -102,6 +88,7 @@ public class OwnerSignUpService {
         String passwordConfirmEncode = passwordEncoder.encode(passwordConfirm);
 
         boolean existsOwner = existsOwner(name, phoneNumber);
+
         Owner ownerByLocal;
         if (existsOwner) {
             Optional<Owner> ownerByNameAndPhoneNumber =
@@ -121,6 +108,10 @@ public class OwnerSignUpService {
                 return SignInSuccess;
             }
         }
+            // 이름과 핸드폰 번호가 동일 할 경우 어떤 경로로 회원가입 되어 있는지 확인하는 예외처리 추가
+
+
+
         Owner ownerInfo = new Owner(email, passwordEncode, passwordConfirmEncode, name, phoneNumber, OAuthProvider.LOCAL, null);
         ownerByLocal = ownerRepository.save(ownerInfo);
 
@@ -142,56 +133,22 @@ public class OwnerSignUpService {
         return signUpSuccess;
     }
 
-    public ApiResponse<?> ownerKakaoSignUpProcess(String code) {
-        // 인가 코드에서 accessToken 가져오기
-        KakaoUserResponse kakaoUserResponse = retrieveKakaoUser(code);
-
-        Long kakaoUserId = kakaoUserResponse.getId();
-        String kakaoEmail = kakaoUserResponse.getKakao_account().getEmail();
-        String kakaoName = kakaoUserResponse.getKakao_account().getName();
-        String kakaoUserPhoneNumber = kakaoUserResponse.getKakao_account().getPhone_number();
-        String replaceKakaoUserPhoneNumber = kakaoUserPhoneNumber.replaceAll("^\\+82\\s?0?10", "010");
-
-        //기존에 가입한 계정(로컬, 어나더소셜) 이 있는가?
-
-        boolean existsOwner = existsOwner(kakaoName, replaceKakaoUserPhoneNumber);
-        Owner ownerByProvide;
-        if (existsOwner) {
-            Optional<Owner> ownerByNameAndPhoneNumber =
-                    ownerRepository.findByNameAndPhoneNumber(kakaoName, replaceKakaoUserPhoneNumber);
-            if (ownerByNameAndPhoneNumber.isPresent()) {
-                Member customerByKaKaoInMember = findOwnerByKaKaoInMember(kakaoName,
-                        replaceKakaoUserPhoneNumber,
-                        OAuthProvider.KAKAO,
-                        kakaoUserId);
-
-                String customerJwtToken = jwtUtil.createMemberJwtToken(customerByKaKaoInMember);
-                OwnerSignInResponse ownerSignInResponse = new OwnerSignInResponse(customerJwtToken);
-
-                ApiResponse<OwnerSignInResponse> SignInSuccess
-                        = ApiResponse
-                        .success(HttpStatus.OK, "환영합니다 " + kakaoName + "님", ownerSignInResponse);
-                return SignInSuccess;
-            }
-        }
-
-        Owner kakaoUserOwnerInfo = new Owner(kakaoEmail, null, null, kakaoName,
-                replaceKakaoUserPhoneNumber, OAuthProvider.KAKAO, kakaoUserId);
-        ownerByProvide = ownerRepository.save(kakaoUserOwnerInfo);
-
-        Member custmerMember = new Member(ownerByProvide);
-        memberRepository.save(custmerMember);
-
-
-        OwnerSignUpResponse ownerKakaoSignUpResponse = new OwnerSignUpResponse(ownerByProvide);
-
-        ApiResponse<OwnerSignUpResponse> success = ApiResponse
-                .success(HttpStatus.CREATED,
-                        ownerByProvide.getName() + "님 회원가입이 완료되었습니다.",
-                        ownerKakaoSignUpResponse);
-        return success;
-
+    private Owner findOwner(String name, String phoneNumber) {
+        Owner owner = ownerRepository
+                .findByNameAndPhoneNumber(name, phoneNumber)
+                .orElseThrow(() -> new OwnerNotFoundException("해당 점주가 존재하지 않습니다"));
+        return owner;
     }
+
+    private boolean existsOwnerEmail(String email) {
+        return ownerRepository.existsByEmail(email);
+    }
+
+    private boolean existsOwner(String name, String phoneNumber) {
+        return ownerRepository.existsByNameAndPhoneNumber(name, phoneNumber);
+    }
+
+
 
     private Member findOwnerByProvider(String name, String phoneNumber, OAuthProvider provider) {
         return memberRepository.findOwnerByProvider(name, phoneNumber, provider)

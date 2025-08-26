@@ -28,50 +28,41 @@ public class StoreRankingService {
     }
 
 
-    // 기존 요청용 메서드 (캐시 확인 + DB fallback)
-    @Transactional(readOnly = true)
+    /**
+     * 캐시 조회
+     */
     public List<StoreRankingResponseDto> getWeeklyTopStores() {
-        List<StoreRankingResponseDto> cached = getCacheIfExists();
-        if (cached != null) {
-            return cached;
+        Cache cache = cacheManager.getCache(CACHE_NAME);
+        if (cache != null) {
+            Object cachedObj = cache.get(CACHE_KEY, Object.class);
+            if (cachedObj instanceof List<?> list) {
+                return list.stream()
+                        .filter(StoreRankingResponseDto.class::isInstance)
+                        .map(StoreRankingResponseDto.class::cast)
+                        .toList();
+            }
         }
-        return refreshWeeklyTopStores(); // 캐시 없으면 DB 조회 후 저장
+        log.warn("[서비스] Redis 캐시 miss ❌"); // 실제로 거의 발생하지 않음
+        return List.of(); // 빈 리스트 반환
     }
 
-    // 캐시 강제 갱신
+    /**
+     * 캐시 강제 갱신 (정각 스케줄러에서 호출)
+     */
     @Transactional(readOnly = true)
-    public List<StoreRankingResponseDto> refreshWeeklyTopStores() {
+    public void refreshWeeklyTopStores() {
         List<StoreRankingResponseDto> data = calculateWeeklyTopStores();
 
         Cache cache = cacheManager.getCache(CACHE_NAME);
         if (cache != null) {
-            cache.put(CACHE_KEY, data); // @CachePut 대신 직접 저장
+            cache.put(CACHE_KEY, data);
             log.info("[서비스] Redis 캐시에 값 저장 완료");
         } else {
             log.warn("[서비스] Redis 캐시 객체 없음");
         }
-
-        return data;
     }
 
-    // Redis 캐시 존재 여부 확인
-    public List<StoreRankingResponseDto> getCacheIfExists() {
-        Cache cache = cacheManager.getCache(CACHE_NAME);
-        if (cache != null) {
-            Object cachedObj = cache.get(CACHE_KEY, Object.class); // Object로 꺼내기
-            if (cachedObj instanceof List<?> list) {               // 런타임에서 타입 체크
-                List<StoreRankingResponseDto> cached = list.stream()
-                        .filter(StoreRankingResponseDto.class::isInstance)
-                        .map(StoreRankingResponseDto.class::cast)
-                        .toList();
-                return cached;
-            }
-        }
-        log.info("[서비스] Redis 캐시 miss ❌");
-        return null;
-    }
-
-    // 실제 순위 계산 로직 분리
+    // 실제 순위 계산 로직
     private List<StoreRankingResponseDto> calculateWeeklyTopStores() {
         LocalDateTime startDate = LocalDateTime.now().minusDays(7);
         long start = System.currentTimeMillis();

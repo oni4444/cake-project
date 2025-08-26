@@ -1,5 +1,7 @@
 package com.cakemate.cake_platform.domain.proposalFormChat.dto;
 
+import com.cakemate.cake_platform.domain.proposalFormChat.enums.MessageType;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,12 +14,8 @@ import lombok.Setter;
 @Setter
 @Builder
 public class ChatMessageResponseDto {
-    // 메시지 타입 : 입장, 채팅
-    public enum MessageType {
-        ENTER, TALK
-    }
-    // 메시지 타입(ENTER, TALK)
-    private ChatMessageRequestDto.MessageType type;
+
+    private MessageType type;
 
     private String sender;
 

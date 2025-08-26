@@ -4,8 +4,9 @@ on:
   push:
     branches:
       - main
+
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -20,8 +21,18 @@ jobs:
 
       - name: Grant permission to gradlew
         run: chmod +x ./gradlew
+        # gradle 캐싱 (0)
+      - name: Gradle Caching
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
 
-      # ✅ 빌드 시 테스트 제외 (원하면 --no-daemon만 사용)
+      # ✅ 빌드 시 테스트 제외 ( .jar 파일 먼저 빌드)
       - name: Build Spring Boot App
         run: ./gradlew clean build -x test
 
@@ -34,6 +45,7 @@ jobs:
       - name: List build/libs directory
         run: ls -l build/libs/
 
+
       # ✅ 빌드된 JAR 업로드 (워크플로우 아티팩트로 저장)
       - name: Upload JAR Artifact
         uses: actions/upload-artifact@v4
@@ -41,49 +53,162 @@ jobs:
           name: app
           path: build/libs/*.jar
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
+          # Docker 이미지 Build ( 그 후 .jar가 들어갈 도커 이미지 빌드)
+      - name: docker image build
+        run: docker build -t zoemthsus/cakemate:1.0 .
 
-    steps:
-      # ✅ 빌드된 JAR 다운로드
-      - name: Download JAR Artifact
-        uses: actions/download-artifact@v4
+      # DockerHub Login (3)
+      - name: docker login
+        uses: docker/login-action@v2
         with:
-          name: app
-          path: ./artifact
-          #✅ 파일 존재 여부 확인 (디버깅용)
-      - name: Check JAR file existence
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Docker Hub push (4)
+      - name: docker Hub push
+        run: docker push zoemthsus/cakemate:1.0
+
+      # GET GitHub IP (5)
+      - name: get GitHub IP
+        id: ip
+        uses: haythem/public-ip@v1.3
+      - name: Debug GitHub IP  # 디버깅 스텝 추가
         run: |
-          ls -l ./artifact/*.jar
-          if ls ./artifact/*.jar; then
-            echo "JAR file exists."
-          else
-            echo "JAR file does not exist!"
-            exit 1
-          fi
+          echo "GitHub Actions Runner IP:"
+          echo "${{ steps.ip.outputs.ipv4 }}"
 
-      # ✅ EC2로 JAR 복사
-      - name: Deploy to EC2
-        uses: appleboy/scp-action@v0.1.7
+      # Configure AWS Credentials (6) - AWS 접근 권한 취득(IAM)
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ubuntu
-          key: ${{ secrets.EC2_SSH_KEY }}
-          source: ./artifact/*.jar
-          target: "/home/ubuntu/app/"
-          overwrite: true
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
 
-      # ✅ EC2에서 애플리케이션 실행
-      - name: Restart Spring Boot on EC2
+      # Add GitHub ip to AWS (7)
+      - name: Add GitHub IP to AWS
+        run: |
+          echo "Security Group ID: ${{ secrets.AWS_SG_ID }}"
+          echo "Runner IP: ${{ steps.ip.outputs.ipv4 }}"
+          aws ec2 authorize-security-group-ingress --group-id ${{ secrets.AWS_SG_ID }} \
+          --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
+          
+
+      - name: Add GitHub IP to REDIS_AWS
+        run: |
+          aws ec2 authorize-security-group-ingress --group-id ${{ secrets.AWS_REDIS_SG_ID }} \
+          --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
+
+      # 도커로 ec2에 있는 레디스 배포
+      - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v0.1.10
         with:
+          host: ${{ secrets.EC2_REDIS_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: ${{ secrets.EC2_SSH_PORT }}
+          script: |
+            cd /home/ubuntu/redis-project
+            docker-compose down
+            docker-compose pull
+            docker-compose up -d
+
+          # AWS EC2 Server Connect & Docker 명령어 실행 (8)
+      - name: AWS EC2 Connection
+        uses: appleboy/ssh-action@v0.1.6
+        with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
+          port: ${{ secrets.EC2_SSH_PORT }}
+          timeout: 60s
           script: |
-            echo "리모트 디렉토리 내용 확인"
-            ls -l /home/ubuntu/app/
+            DATABASE="${{ secrets.RDS_DATABASE }}"
+            USERNAME="${{ secrets.RDS_USERNAME }}"
+            PASSWORD="${{ secrets.RDS_PASSWORD }}"
+            EC2END="${{ secrets.EC2END }}"
+            JWT_SECRET_KEY="${{ secrets.JWT_SECRET_KEY }}"
+            KAKAO_CLIENT_ID="${{ secrets.KAKAO_CLIENT_ID }}"
+            KAKAO_CLIENT_SECRET="${{ secrets.KAKAO_CLIENT_SECRET }}"
+            export REDIS_HOST="${{ secrets.REDIS_HOST }}"
+            export REDIS_PORT="${{ secrets.REDIS_PORT }}"
+            export REDIS_PASSWORD="${{ secrets.REDIS_PASSWORD }}"
             
-            # 배포 후 실행 (run-deploy.sh)
-            bash /home/ubuntu/app/run-deploy.sh
+            
+            sudo docker stop dnd2 
+            sudo docker rm dnd2 
+            sudo docker rmi zoemthsus/cakemate:1.0 
+            sudo docker pull zoemthsus/cakemate:1.0
+
+            sudo docker run -it -d \
+              --restart unless-stopped \
+              -p 80:8000 \
+              --name dnd2 \
+              -v /home/ubuntu/app/prod-log:/app/logs \
+              -e REDIS_HOST=$REDIS_HOST \
+              -e REDIS_PORT=$REDIS_PORT \
+              -e REDIS_PASSWORD=$REDIS_PASSWORD \
+              -e EC2END=$EC2END \
+              -e DATABASE=$DATABASE \
+              -e USERNAME=$USERNAME \
+              -e PASSWORD=$PASSWORD \
+              -e JWT_SECRET_KEY=$JWT_SECRET_KEY \
+              -e KAKAO_CLIENT_ID=$KAKAO_CLIENT_ID \
+              -e KAKAO_CLIENT_SECRET=$KAKAO_CLIENT_SECRET \
+              zoemthsus/cakemate:1.0
+
+            sleep 3
+            sudo docker logs -f dnd2 > /home/ubuntu/app.log 2>&1 &
+
+          # 서브 EC2 배포 (9)
+      - name: AWS Sub EC2 Connection
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.SUB_EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.SUB_EC2_SSH_KEY }}
+          port: ${{ secrets.SUB_EC2_SSH_PORT }}
+          timeout: 60s
+          script: |
+            DATABASE="${{ secrets.RDS_DATABASE }}"
+            USERNAME="${{ secrets.RDS_USERNAME }}"
+            PASSWORD="${{ secrets.RDS_PASSWORD }}"
+            EC2END="${{ secrets.EC2END }}"
+            JWT_SECRET_KEY="${{ secrets.JWT_SECRET_KEY }}"
+            KAKAO_CLIENT_ID="${{ secrets.KAKAO_CLIENT_ID }}"
+            KAKAO_CLIENT_SECRET="${{ secrets.KAKAO_CLIENT_SECRET }}"
+            export REDIS_HOST="${{ secrets.REDIS_HOST }}"
+            export REDIS_PORT="${{ secrets.REDIS_PORT }}"
+            export REDIS_PASSWORD="${{ secrets.REDIS_PASSWORD }}"
+
+            sudo docker stop dnd2-sub || true
+            sudo docker rm dnd2-sub || true
+            sudo docker rmi zoemthsus/cakemate:1.0 || true
+            sudo docker pull zoemthsus/cakemate:1.0
+
+            sudo docker run -it -d \
+              --restart unless-stopped \
+              -p 80:8000 \
+              --name dnd2-sub \
+              -v /home/ubuntu/app/prod-log:/app/logs \
+              -e REDIS_HOST=$REDIS_HOST \
+              -e REDIS_PORT=$REDIS_PORT \
+              -e REDIS_PASSWORD=$REDIS_PASSWORD \
+              -e EC2END=$EC2END \
+              -e DATABASE=$DATABASE \
+              -e USERNAME=$USERNAME \
+              -e PASSWORD=$PASSWORD \
+              -e JWT_SECRET_KEY=$JWT_SECRET_KEY \
+              -e KAKAO_CLIENT_ID=$KAKAO_CLIENT_ID \
+              -e KAKAO_CLIENT_SECRET=$KAKAO_CLIENT_SECRET \
+              zoemthsus/cakemate:1.0
+
+            sleep 3
+            sudo docker logs -f dnd2-sub > /home/ubuntu/app-sub.log 2>&1 &
+
+      # REMOVE GitHub IP FROM a security group (10) 배포 실패시에도 ip제거
+      - name: Remove IP FROM security group
+        if: always()
+        run: |
+          aws ec2 revoke-security-group-ingress --group-id ${{ secrets.AWS_SG_ID }} \
+          --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32

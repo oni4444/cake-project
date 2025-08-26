@@ -6,10 +6,6 @@ plugins {
 
 group = 'com.cakemate'
 version = '0.0.1-SNAPSHOT'
-// web소켓 메인메서드 추가로 인한 빌드 할 메인메서드 명시
-springBoot {
-	mainClass.set("com.cakemate.cake_platform.CakePlatformApplication")
-}
 
 java {
 	toolchain {
@@ -46,23 +42,15 @@ dependencies {
 	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
 
-	// 스프링 시큐리티
-	//    implementation 'org.springframework.boot:spring-boot-starter-security'
 	// 스프링 시큐리티의 암호와 라이브러리
 	implementation 'org.springframework.security:spring-security-crypto'
-// .env 관리 라이브러리
-//	implementation 'io.github.cdimascio:dotenv-java:3.2.0'
 
-	//아래 추가(@SpringBootTest 를 인식할 수 있는 라이브러리)
-//	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
 	//아래 추가 ->[WebSocket(실시간 채팅 : 양방향 통신 구현 시 필요)]
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
 	// Spring Cache
 	implementation 'org.springframework.boot:spring-boot-starter-cache'
 
-	// Caffeine Cache
-	//implementation 'com.github.ben-manes.caffeine:caffeine'
 	//Redis기능
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 	implementation 'io.lettuce:lettuce-core' // Redis 클라이언트

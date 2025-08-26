@@ -254,37 +254,10 @@ public class ProposalFormService {
                 .collect(Collectors.toList());
 
 
-        // 채팅 내역 섹션 DTO 초기화
-        //->나중에 roomId가 있으면 그 안에 채팅방 ID랑 메시지 목록을 넣어서 완성된 DTO 를 만들고,
-        //roomId가 없으면 그냥 빈 상태(null)로 둔다
-        ChatHistorySectionDto chatSection = null;
-
-        // roomId가 존재하는 경우에만 채팅 내역 조회
-        //특정 채팅방을 가리키는 ID가 있으면 그 방의 채팅 내역을 DB 에서 가져온다.
-        if (roomId != null) {
-
-            // 1. 해당 채팅방(roomId)의 메시지를 생성일 기준 오름차순으로 조회
-            List<ChatMessageEntity> result =
-                    chatMessageRepository.findByRoomIdOrderByCreatedAtAsc(roomId);
-
-            // 2. 조회된 엔티티 리스트를 ChatMessageHistoryDto 로 변환
-            List<ChatMessageHistoryResponseDto> items = result.stream()
-                    .map(ChatMessageHistoryResponseDto::from)
-                    .collect(Collectors.toList());
-
-            // 3. 채팅방 ID와 메시지 목록을 포함한 ChatHistorySectionDto 객체를 생성
-            chatSection = ChatHistorySectionDto.builder()
-                    .chatRoomId(roomId)
-                    .messages(items)
-                    .build();
-        }
-
-
-        //chatSection 추가
         //응답 DTO 만들기
         ProposalFormContainsRequestFormDataDto responseDto
                 = new ProposalFormContainsRequestFormDataDto(
-                        requestFormDataDto, proposalFormDataDto, chatSection, commentDtoList
+                        requestFormDataDto, proposalFormDataDto, commentDtoList
         );
 
         //반환

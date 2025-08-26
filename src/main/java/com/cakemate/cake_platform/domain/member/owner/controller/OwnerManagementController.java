@@ -2,10 +2,12 @@ package com.cakemate.cake_platform.domain.member.owner.controller;
 
 import com.cakemate.cake_platform.common.dto.ApiResponse;
 import com.cakemate.cake_platform.common.jwt.util.JwtUtil;
+import com.cakemate.cake_platform.domain.auth.oAuthEnum.OAuthProvider;
 import com.cakemate.cake_platform.domain.member.owner.dto.request.UpdateOwnerProfileRequestDto;
 import com.cakemate.cake_platform.domain.member.owner.dto.response.OwnerProfileResponseDto;
 import com.cakemate.cake_platform.domain.member.owner.dto.response.UpdateOwnerProfileResponseDto;
 import com.cakemate.cake_platform.domain.member.owner.service.OwnerManagementService;
+import io.jsonwebtoken.Claims;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -64,4 +66,5 @@ public class OwnerManagementController {
         ApiResponse<Void> response = ownerManagementService.deleteOwnerProfileService(ownerId);
         return ResponseEntity.ok(response);
     }
+
 }

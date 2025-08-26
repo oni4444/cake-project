@@ -2,6 +2,7 @@ package com.cakemate.cake_platform.domain.proposalForm.controller;
 
 import com.cakemate.cake_platform.common.dto.ApiResponse;
 import com.cakemate.cake_platform.common.jwt.util.JwtUtil;
+import com.cakemate.cake_platform.domain.proposalForm.dto.CreateRoomByCustomerResponseDto;
 import com.cakemate.cake_platform.domain.proposalForm.dto.CustomerProposalFormAcceptResponseDto;
 import com.cakemate.cake_platform.domain.proposalForm.dto.CustomerProposalFormDetailDto;
 import com.cakemate.cake_platform.domain.proposalForm.service.CustomerProposalFormService;
@@ -22,6 +23,17 @@ public class CustomerProposalFormController {
         this.proposalFormService = proposalFormService;
         this.customerProposalFormService = customerProposalFormService;
         this.jwtUtil = jwtUtil;
+    }
+    /**
+     * 소비자 전용 chatRoom 조회 API
+     */
+    @GetMapping("/{proposalFormId}/chat")
+    public ApiResponse<CreateRoomByCustomerResponseDto> createRoomByCustomer(
+            @PathVariable Long proposalFormId,
+            @RequestHeader("Authorization") String bearerToken) {
+        Long customerId = jwtUtil.extractCustomerId(bearerToken);
+        ApiResponse<CreateRoomByCustomerResponseDto> response = customerProposalFormService.createRoomByCustomer(proposalFormId, customerId);
+        return response;
     }
 
     /**

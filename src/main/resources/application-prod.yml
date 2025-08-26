@@ -1,9 +1,9 @@
 spring:
   data:
     redis:
-      host: 172.31.5.120
-      port: 17379
-      password: passstrong!1
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
   application:
     name: cake-platform
 
@@ -33,9 +33,15 @@ jwt:
 logging:
   config: classpath:logback-spring-${spring.profiles.active}.xml
 kakao:
-  redirect-uri-signin-owners-kakao: http://cakemate.org:8000/api/owners/kakao/signin
-  redirect-uri-signin-customers-kakao: http://cakemate.org:8000/api/customers/kakao/signin
+  redirect-uri-signin-owners-kakao: http://cakemate.org/api/owners/kakao/signin
+  redirect-uri-signin-customers-kakao: http://cakemate.org/api/customers/kakao/signin
   client-id: ${KAKAO_CLIENT_ID}
   client-secret: ${KAKAO_CLIENT_SECRET}
   kauth-host: https://kauth.kakao.com
   kapi-host: https://kapi.kakao.com
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
