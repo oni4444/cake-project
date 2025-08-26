@@ -17,6 +17,7 @@ public class ProposalFormDataDto {
     private Long proposalFormId;
     private Long requestFormId;
     private String storeName;
+    private String storeAddress;
     private String title;
     private CakeSize cakeSize;
     private int quantity;
@@ -41,10 +42,11 @@ public class ProposalFormDataDto {
     private String chatRoomId;
 
     //owner 전용 생성자(모든 정보 다룸)
-    public ProposalFormDataDto(Long proposalFormId, Long requestFormId, String storeName, String title, CakeSize cakeSize, int quantity, String content, String managerName, int proposedPrice, LocalDateTime proposedPickupDate, LocalDateTime createdAt, LocalDateTime modifiedAt, String status, String image, String chatRoomId) {
+    public ProposalFormDataDto(Long proposalFormId, Long requestFormId, String storeName, String storeAddress, String title, CakeSize cakeSize, int quantity, String content, String managerName, int proposedPrice, LocalDateTime proposedPickupDate, LocalDateTime createdAt, LocalDateTime modifiedAt, String status, String image, String chatRoomId) {
         this.proposalFormId = proposalFormId;
         this.requestFormId = requestFormId;
         this.storeName = storeName;
+        this.storeAddress = storeAddress;
         this.title = title;
         this.cakeSize = cakeSize;
         this.quantity = quantity;
@@ -58,10 +60,11 @@ public class ProposalFormDataDto {
         this.image = image;
         this.chatRoomId = chatRoomId;
     }
-    public ProposalFormDataDto(Long proposalFormId, Long requestFormId, String storeName, String title, CakeSize cakeSize, int quantity, String content, String managerName, int proposedPrice, LocalDateTime proposedPickupDate, LocalDateTime createdAt, LocalDateTime modifiedAt, String status, String image) {
+    public ProposalFormDataDto(Long proposalFormId, Long requestFormId, String storeName, String storeAddress, String title, CakeSize cakeSize, int quantity, String content, String managerName, int proposedPrice, LocalDateTime proposedPickupDate, LocalDateTime createdAt, LocalDateTime modifiedAt, String status, String image) {
         this.proposalFormId = proposalFormId;
         this.requestFormId = requestFormId;
         this.storeName = storeName;
+        this.storeAddress = storeAddress;
         this.title = title;
         this.cakeSize = cakeSize;
         this.quantity = quantity;

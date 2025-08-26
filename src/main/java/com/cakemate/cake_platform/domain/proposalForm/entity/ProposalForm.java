@@ -39,6 +39,9 @@ public class ProposalForm extends BaseTimeEntity {
     @Column(nullable = false)
     private String storeName;
 
+    @Column(nullable = false)
+    private String storeAddress;
+
     @Column(name = "manager_name")
     private String managerName;
 
@@ -76,12 +79,13 @@ public class ProposalForm extends BaseTimeEntity {
     protected ProposalForm() {
     }
 
-    public ProposalForm(RequestForm requestForm, Store store, Owner owner, String storeName, String title, CakeSize cakeSize, int quantity, String content,
+    public ProposalForm(RequestForm requestForm, Store store, Owner owner, String storeName, String storeAddress, String title, CakeSize cakeSize, int quantity, String content,
                         String managerName, int proposedPrice, LocalDateTime proposedPickupDate, String image, ProposalFormStatus status) {
         this.requestForm = requestForm;
         this.store = store;
         this.owner = owner;
         this.storeName = storeName;
+        this.storeAddress = storeAddress;
         this.title = title;
         this.cakeSize = cakeSize;
         this.quantity = quantity;

@@ -5,8 +5,10 @@ import com.cakemate.cake_platform.domain.notification.service.NotificationServic
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.util.Optional;
+
 @RestController
-@RequestMapping("/api/notify")
+@RequestMapping("/notifications/stream")
 public class NotificationController {
     private final  NotificationService notificationService;
     private final JwtUtil jwtUtil;
@@ -16,20 +18,20 @@ public class NotificationController {
         this.jwtUtil = jwtUtil;
     }
 
-    @GetMapping(value = "/customer/subscribe", produces = "text/event-stream")
+    @GetMapping(value = "/customer", produces = "text/event-stream")
     public SseEmitter subscribeCustomerAPI(
             @RequestHeader("Authorization") String bearerToken,
-            @RequestHeader(value = "Last-Event-Id", required = false, defaultValue = "") String lastEventId) {
+            @RequestHeader(value = "Last-Event-ID", required = false) String lastEventIdHeader) {
         Long customerId = jwtUtil.extractCustomerId(bearerToken);
-        return notificationService.subscribeCustomer(customerId, lastEventId);
+        return notificationService.subscribeCustomer(customerId, Optional.ofNullable(lastEventIdHeader));
     }
 
-    @GetMapping(value = "/owner/subscribe", produces = "text/event-stream")
+    @GetMapping(value = "/owner", produces = "text/event-stream")
     public SseEmitter subscribeOwnerAPI(
             @RequestHeader("Authorization") String bearerToken,
-            @RequestHeader(value = "Last-Event-Id", required = false, defaultValue = "") String lastEventId) {
+            @RequestHeader(value = "Last-Event-ID", required = false) String lastEventIdHeader) {
         Long ownerId = jwtUtil.extractOwnerId(bearerToken);
-        return notificationService.subscribeOwner(ownerId, lastEventId);
+        return notificationService.subscribeOwner(ownerId, Optional.ofNullable(lastEventIdHeader));
     }
 
     @PostMapping("/test")

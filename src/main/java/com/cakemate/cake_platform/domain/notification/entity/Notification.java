@@ -20,11 +20,12 @@ public class Notification {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "receiver_id", nullable = false)
     private Long receiverId;
     private String message;
 
     @Column(name = "is_read")
-    private boolean read = false;
+    private boolean isRead = false;
 
     @CreatedDate
     @Column(nullable = false, updatable = false)
@@ -40,7 +41,7 @@ public class Notification {
 
     //알림 읽음 처리 기능
     public void markAsRead() {
-        this.read = true;
+        this.isRead = true;
     }
 
 }

@@ -18,6 +18,7 @@ public class CustomerProposalFormDataDto {
     private Long proposalFormId;
     private Long requestFormId;
     private String storeName;
+    private String storeAddress;
     private String title;
     private CakeSize cakeSize;
     private int quantity;
@@ -41,10 +42,11 @@ public class CustomerProposalFormDataDto {
     private String chatRoomId;
 
     //customer 전용 생성자(담당자 정보 제외)
-    public CustomerProposalFormDataDto(Long proposalFormId, Long requestFormId, String storeName, String title, CakeSize cakeSize, int quantity, String content, int proposedPrice, LocalDateTime proposedPickupDate, LocalDateTime createdAt, LocalDateTime modifiedAt, String status, String image) {
+    public CustomerProposalFormDataDto(Long proposalFormId, Long requestFormId, String storeName, String storeAddress, String title, CakeSize cakeSize, int quantity, String content, int proposedPrice, LocalDateTime proposedPickupDate, LocalDateTime createdAt, LocalDateTime modifiedAt, String status, String image) {
         this.proposalFormId = proposalFormId;
         this.requestFormId = requestFormId;
         this.storeName = storeName;
+        this.storeAddress = storeAddress;
         this.title = title;
         this.cakeSize = cakeSize;
         this.quantity = quantity;
@@ -57,10 +59,11 @@ public class CustomerProposalFormDataDto {
         this.image = image;
     }
 
-    public CustomerProposalFormDataDto(Long proposalFormId, Long requestFormId, String storeName, String title, CakeSize cakeSize, int quantity, String content, int proposedPrice, LocalDateTime proposedPickupDate, LocalDateTime createdAt, LocalDateTime modifiedAt, String status, String image, String chatRoomId) {
+    public CustomerProposalFormDataDto(Long proposalFormId, Long requestFormId, String storeName, String storeAddress, String title, CakeSize cakeSize, int quantity, String content, int proposedPrice, LocalDateTime proposedPickupDate, LocalDateTime createdAt, LocalDateTime modifiedAt, String status, String image, String chatRoomId) {
         this.proposalFormId = proposalFormId;
         this.requestFormId = requestFormId;
         this.storeName = storeName;
+        this.storeAddress = storeAddress;
         this.title = title;
         this.cakeSize = cakeSize;
         this.quantity = quantity;

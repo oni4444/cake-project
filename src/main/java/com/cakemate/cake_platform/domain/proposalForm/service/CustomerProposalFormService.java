@@ -85,6 +85,7 @@ public class CustomerProposalFormService {
                 proposalForm.getId(),
                 proposalForm.getRequestForm().getId(),
                 proposalForm.getStoreName(),
+                proposalForm.getStoreAddress(),
                 proposalForm.getTitle(),
                 proposalForm.getCakeSize(),
                 proposalForm.getQuantity(),
